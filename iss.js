@@ -84,7 +84,7 @@ const fetchCoordsByIP = function(ip, callback) {
  * @param {{latitude, longitude}}} param : an object with latitude and longitude of the place for which ISS passes are to be found
  * @param {Function} callback : a callback handler to handle the result: either error or a valid list of ISS passes information
  */
-const fetchISSFlyOverTimes = function({latitude, longitude}, callback) {
+const fetchISSFlyOverTimes = function({ latitude, longitude }, callback) {
 
   let uri = `https://iss-pass.herokuapp.com/json/?lat=${latitude}&lon=${longitude}`;
   request(uri, (err, resp, body) => {
@@ -114,4 +114,47 @@ const fetchISSFlyOverTimes = function({latitude, longitude}, callback) {
   });
 };
 
-module.exports = { fetchMyIP, fetchCoordsByIP, fetchISSFlyOverTimes };
+
+/**
+ * Orchestrates multiple API requests in order to determine the next 5 upcoming ISS fly overs for the user's current location.
+ * Input:
+ *   - A callback with an error or results.
+ * Returns (via Callback):
+ *   - An error, if any (nullable)
+ *   - The fly-over times as an array (null if error):
+ *     [ { risetime: <number>, duration: <number> }, ... ]
+ */
+const nextISSTimesForMyLocation = function(callback) {
+
+  fetchMyIP((error, ip) => {
+    if (error) {
+      console.log("It didn't work!", error);
+      callback(error, null);
+      return;
+    }
+
+    fetchCoordsByIP(ip, (error, geoCoord) => {
+      if (error) {
+        console.log("It didn't work!", error);
+        callback(error, null);
+        return;
+      }
+
+      let geoObj = JSON.parse(geoCoord);
+      let latitude = geoObj.latitude;
+      let longitude = geoObj.longitude;
+
+      fetchISSFlyOverTimes({ latitude, longitude }, (error, issPasses) => {
+        if (error) {
+          console.log("It didn't work!", error);
+          callback(error, null);
+          return;
+        }
+
+        callback(null, issPasses);
+      });
+    });
+  });
+};
+
+module.exports = { fetchMyIP, fetchCoordsByIP, fetchISSFlyOverTimes, nextISSTimesForMyLocation };
