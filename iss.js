@@ -39,4 +39,30 @@ const fetchMyIP = function(callback) {
   });
 };
 
-module.exports = { fetchMyIP };
+/**
+ *
+ * @param {String} ip : ip address whose geo-coordinates to find
+ * @param {Function} callback : (error, coordinates) => { } : Handler function that will called with the result.
+ * Either error of the goe-coordinates of the ip address will be passed to it.
+ */
+const fetchCoordsByIP = function(ip, callback) {
+
+
+  request(ip, (err, resp, body)=>{
+
+    if (err) {
+      callback(err, null);
+      return;
+    }
+
+    let geoObj = JSON.parse(body);
+    let latitude = geoObj.latitude;
+    let longitude = geoObj.longitude;
+    let latLngObj = { latitude, longitude };
+    let latLngStr = JSON.stringify(latLngObj);
+
+    callback(null, latLngStr);
+  });
+};
+
+module.exports = { fetchMyIP, fetchCoordsByIP };
