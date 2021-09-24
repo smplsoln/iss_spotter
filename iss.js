@@ -63,7 +63,7 @@ const fetchCoordsByIP = function(ip, callback) {
     }
 
     if (!body || body === "") {
-      callback(new Error('Geo coordinates not found for IP ${ip} : nothing returned!'));
+      callback(new Error(`Geo coordinates not found for IP ${ip} : nothing returned!`));
       return;
     }
 
@@ -71,10 +71,45 @@ const fetchCoordsByIP = function(ip, callback) {
     let latitude = geoObj.latitude;
     let longitude = geoObj.longitude;
     let latLngObj = { latitude, longitude };
-    let latLngStr = JSON.stringify(latLngObj);
+    let passes = JSON.stringify(latLngObj);
 
-    callback(null, latLngStr);
+    callback(null, passes);
   });
 };
 
-module.exports = { fetchMyIP, fetchCoordsByIP };
+
+
+// https://iss-pass.herokuapp.com/json/?lat=50.4481&lon=-104.6126
+
+
+const fetchISSFlyOverTimes = function({latitude, longitude}, callback) {
+
+  let uri = `https://isooooos-pass.herokuapp.com/json/?lat=${latitude}&lon=${longitude}`;
+  request(uri, (err, resp, body) => {
+
+    if (err) {
+      callback(err, null);
+      return;
+    }
+
+    // if non-200 status, assume server error
+    if (resp.statusCode !== 200) {
+      const msg = `Status Code ${resp.statusCode} when fetching ISS passs for latitude: ${latitude}, longitude ${longitude}. Response: ${body}`;
+      callback(new Error(msg), null);
+      return;
+    }
+
+    if (!body || body === "") {
+      callback(new Error(`ISS passs not found for latitude: ${latitude}, longitude ${longitude} : nothing returned!`));
+      return;
+    }
+
+    let bodyObj = JSON.parse(body);
+    let respArr = bodyObj.response;
+    let passes = JSON.stringify(respArr);
+
+    callback(null, passes);
+  });
+};
+
+module.exports = { fetchMyIP, fetchCoordsByIP, fetchISSFlyOverTimes };
