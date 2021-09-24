@@ -24,7 +24,7 @@ const fetchMyIP = function(callback) {
     // if non-200 status, assume server error
     if (response.statusCode !== 200) {
       const msg = `Status Code ${response.statusCode} when fetching IP. Response: ${body}`;
-      callback(Error(msg), null);
+      callback(new Error(msg), null);
       return;
     }
 
@@ -47,11 +47,23 @@ const fetchMyIP = function(callback) {
  */
 const fetchCoordsByIP = function(ip, callback) {
 
-
-  request(ip, (err, resp, body)=>{
+  let uri = `https://freegeoip.app/json/${ip}`;
+  request(uri, (err, resp, body) => {
 
     if (err) {
       callback(err, null);
+      return;
+    }
+
+    // if non-200 status, assume server error
+    if (resp.statusCode !== 200) {
+      const msg = `Status Code ${resp.statusCode} when fetching geo coordinates by IP ${ip}. Response: ${body}`;
+      callback(new Error(msg), null);
+      return;
+    }
+
+    if (!body || body === "") {
+      callback(new Error('Geo coordinates not found for IP ${ip} : nothing returned!'));
       return;
     }
 
